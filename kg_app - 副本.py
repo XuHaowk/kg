@@ -2,7 +2,7 @@
 """
 基于大语言模型的文本实体提取系统
 
-该程序集成了PubMed与CNKI文献爬取、文本处理、实体关系提取和知识图谱构建功能，
+该程序集成了PubMed文献爬取、文本处理、实体关系提取和知识图谱构建功能，
 提供用户友好的界面来执行整个工作流程。
 """
 
@@ -29,15 +29,7 @@ from crawler import PubMedCrawler
 from batch_process import process_batch
 from extractor.kimi_client import KimiClient
 from kg_builder import KnowledgeGraphBuilder
-from cnki_selenium_fixed import CNKIWebScraper
 
-
-# Try to import the CNKI Selenium integration
-try:
-    from cnki_selenium_integration import CNKISeleniumIntegration, is_selenium_available, show_installation_instructions
-    SELENIUM_AVAILABLE = is_selenium_available()
-except ImportError:
-    SELENIUM_AVAILABLE = False
 class KGApp:
     """文献知识图谱应用主类"""
 
@@ -151,18 +143,14 @@ class KGApp:
                 self.config['API'] = {
                     'ncbi_email': '',
                     'ncbi_api_key': '',
-                    'moonshot_api_key': '',
-                    'cnki_username': '',
-                    'cnki_password': ''
+                    'moonshot_api_key': ''
                 }
                 self.config['Search'] = {
                     'search_terms': '输入关键词，多个使用逗号分隔',
                     'start_date': (datetime.now() - timedelta(days=365*5)).strftime('%Y/%m/%d'),
                     'end_date': datetime.now().strftime('%Y/%m/%d'),
                     'max_results': '1000',
-                    'database': 'pubmed',
-                    'search_mode': 'separate',
-                    'cnki_db_code': 'CJFD'
+                    'search_mode': 'separate'
                 }
                 self.config['Process'] = {
                     'output_dir': os.path.join(self.results_dir, 'output').replace('\\', '\\\\'),  # 转义反斜杠
@@ -211,52 +199,34 @@ class KGApp:
         ttk.Label(main_frame, text="注: 获取NCBI API密钥可提高抓取速度，每秒可查询10次").grid(
             row=4, column=0, columnspan=2, sticky="w", pady=(0, 10))
         
-        # CNKI配置（新增）
-        ttk.Label(main_frame, text="CNKI配置", font=("Arial", 12, "bold")).grid(
-            row=5, column=0, columnspan=2, sticky="w", pady=(10, 5))
-        
-        ttk.Label(main_frame, text="用户名:").grid(row=6, column=0, sticky="w", pady=2)
-        self.cnki_username_var = tk.StringVar(value=self.config.get('API', 'cnki_username', fallback=''))
-        ttk.Entry(main_frame, textvariable=self.cnki_username_var, width=50).grid(
-            row=6, column=1, sticky="w", pady=2)
-        
-        ttk.Label(main_frame, text="密码:").grid(row=7, column=0, sticky="w", pady=2)
-        self.cnki_password_var = tk.StringVar(value=self.config.get('API', 'cnki_password', fallback=''))
-        ttk.Entry(main_frame, textvariable=self.cnki_password_var, width=50, show="*").grid(
-            row=7, column=1, sticky="w", pady=2)
-        
-        ttk.Label(main_frame, text="注: CNKI账号用于访问中国知网文献，不提供则使用游客模式（受限）").grid(
-            row=8, column=0, columnspan=2, sticky="w", pady=(0, 10))
-        
         # Moonshot配置
         ttk.Label(main_frame, text="Moonshot AI配置", font=("Arial", 12, "bold")).grid(
-            row=9, column=0, columnspan=2, sticky="w", pady=(10, 5))
+            row=5, column=0, columnspan=2, sticky="w", pady=(10, 5))
         
-        ttk.Label(main_frame, text="API密钥:").grid(row=10, column=0, sticky="w", pady=2)
+        ttk.Label(main_frame, text="API密钥:").grid(row=6, column=0, sticky="w", pady=2)
         self.moonshot_api_key_var = tk.StringVar(value=self.config.get('API', 'moonshot_api_key', fallback=''))
         ttk.Entry(main_frame, textvariable=self.moonshot_api_key_var, width=50).grid(
-            row=10, column=1, sticky="w", pady=2)
+            row=6, column=1, sticky="w", pady=2)
         
         ttk.Label(main_frame, text="注: 需要Moonshot API密钥进行实体关系提取").grid(
-            row=11, column=0, columnspan=2, sticky="w", pady=(0, 10))
+            row=7, column=0, columnspan=2, sticky="w", pady=(0, 10))
         
         # 保存按钮
         ttk.Button(main_frame, text="保存配置", command=self.save_api_config).grid(
-            row=12, column=0, columnspan=2, pady=20)
+            row=8, column=0, columnspan=2, pady=20)
         
         # 说明文本
         help_text = (
             "系统使用说明:\n\n"
-            "1. 配置API密钥和账号\n"
+            "1. 配置API密钥\n"
             "   - NCBI API密钥用于从PubMed获取文献\n"
-            "   - CNKI账号用于从中国知网获取文献\n"
             "   - Moonshot API密钥用于实体关系提取\n\n"
             "2. 在'文献搜索'选项卡中设置搜索参数并获取文献\n\n"
             "3. 在'数据处理'选项卡中处理文献并构建知识图谱\n\n"
             "4. 知识图谱将保存为HTML格式，可以在浏览器中查看"
         )
         text_area = scrolledtext.ScrolledText(main_frame, width=70, height=15, wrap=tk.WORD)
-        text_area.grid(row=13, column=0, columnspan=2, pady=10)
+        text_area.grid(row=9, column=0, columnspan=2, pady=10)
         text_area.insert(tk.INSERT, help_text)
         text_area.config(state=tk.DISABLED)
 
@@ -266,38 +236,34 @@ class KGApp:
         ncbi_email = self.ncbi_email_var.get()
         ncbi_api_key = self.ncbi_api_key_var.get()
         moonshot_api_key = self.moonshot_api_key_var.get()
-        cnki_username = self.cnki_username_var.get()
-        cnki_password = self.cnki_password_var.get()
-        
+    
         self.logger.info("正在保存API配置...")
-        
+    
         # 保存到app_config.ini
         self.config['API'] = {
             'ncbi_email': ncbi_email,
             'ncbi_api_key': ncbi_api_key,
-            'moonshot_api_key': moonshot_api_key,
-            'cnki_username': cnki_username,
-            'cnki_password': cnki_password
+            'moonshot_api_key': moonshot_api_key
         }
         self.save_config()
         self.logger.info("已保存到app_config.ini")
-        
+    
         # 同步更新config.py文件
         try:
             # 获取config.py文件路径
             config_py_path = os.path.join(script_dir, "config.py")
-            
+        
             # 检查文件是否存在
             if os.path.exists(config_py_path):
                 # 读取现有的config.py内容
                 with open(config_py_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                
+            
                 # 替换API密钥
                 new_content = []
                 lines = content.splitlines()
                 kimi_api_key_updated = False
-                
+            
                 for line in lines:
                     if line.startswith("KIMI_API_KEY = "):
                         new_line = f'KIMI_API_KEY = "{moonshot_api_key}"'
@@ -305,11 +271,11 @@ class KGApp:
                         kimi_api_key_updated = True
                     else:
                         new_content.append(line)
-                
+            
                 # 如果没有找到KIMI_API_KEY定义，则添加到文件末尾
                 if not kimi_api_key_updated and moonshot_api_key:
                     new_content.append(f'KIMI_API_KEY = "{moonshot_api_key}"')
-                
+            
                 # 写回更新后的内容
                 with open(config_py_path, 'w', encoding='utf-8') as f:
                     f.write('\n'.join(new_content))
@@ -323,7 +289,7 @@ class KGApp:
                     self.logger.info("已重新加载config模块")
                 except Exception as e:
                     self.logger.error(f"重新加载config模块时出错: {str(e)}")
-                
+            
                 # 显示成功消息
                 messagebox.showinfo("配置已保存", "API配置已成功保存到app_config.ini和config.py")
             else:
@@ -342,114 +308,64 @@ class KGApp:
         main_frame.pack(fill="both", expand=True)
     
         # 创建标题
-        ttk.Label(main_frame, text="文献搜索", font=("Arial", 16, "bold")).grid(
+        ttk.Label(main_frame, text="PubMed文献搜索", font=("Arial", 16, "bold")).grid(
             row=0, column=0, columnspan=2, sticky="w", pady=(0, 20))
     
-        # 数据库选择
-        ttk.Label(main_frame, text="数据库:").grid(row=1, column=0, sticky="w", pady=2)
-        self.database_var = tk.StringVar(value=self.config.get('Search', 'database', fallback='pubmed'))
-        database_frame = ttk.Frame(main_frame)
-        database_frame.grid(row=1, column=1, sticky="w", pady=2)
-        ttk.Radiobutton(database_frame, text="PubMed", variable=self.database_var, 
-                       value="pubmed", command=self.update_search_options).grid(row=0, column=0, sticky="w", padx=5)
-        ttk.Radiobutton(database_frame, text="CNKI中国知网", variable=self.database_var, 
-                       value="cnki", command=self.update_search_options).grid(row=0, column=1, sticky="w", padx=5)
-    
-        # Add CNKI method selection
-        if SELENIUM_AVAILABLE:
-            self.cnki_method_var = tk.StringVar(value="api")
-            cnki_method_frame = ttk.Frame(main_frame)
-            cnki_method_frame.grid(row=1, column=2, sticky="w", pady=2)
-            ttk.Label(cnki_method_frame, text="CNKI方法:").grid(row=0, column=0, sticky="w", padx=5)
-            ttk.Radiobutton(cnki_method_frame, text="传统API", variable=self.cnki_method_var, 
-                           value="api").grid(row=0, column=1, sticky="w", padx=5)
-            ttk.Radiobutton(cnki_method_frame, text="Selenium浏览器", variable=self.cnki_method_var, 
-                           value="selenium").grid(row=0, column=2, sticky="w", padx=5)
-            ttk.Radiobutton(cnki_method_frame, text="手动模式", variable=self.cnki_method_var, 
-                           value="manual").grid(row=0, column=3, sticky="w", padx=5)
-    
         # 搜索参数
-        ttk.Label(main_frame, text="搜索关键词(用逗号分隔):").grid(row=2, column=0, sticky="w", pady=2)
+        ttk.Label(main_frame, text="搜索关键词(用逗号分隔):").grid(row=1, column=0, sticky="w", pady=2)
         self.search_terms_var = tk.StringVar(value=self.config.get('Search', 'search_terms', fallback='输入关键词，多个使用逗号分隔'))
         ttk.Entry(main_frame, textvariable=self.search_terms_var, width=50).grid(
-            row=2, column=1, sticky="w", pady=2)
+            row=1, column=1, sticky="w", pady=2)
     
-        ttk.Label(main_frame, text="起始日期(YYYY/MM/DD):").grid(row=3, column=0, sticky="w", pady=2)
+        ttk.Label(main_frame, text="起始日期(YYYY/MM/DD):").grid(row=2, column=0, sticky="w", pady=2)
         self.start_date_var = tk.StringVar(value=self.config.get('Search', 'start_date'))
         ttk.Entry(main_frame, textvariable=self.start_date_var, width=20).grid(
-            row=3, column=1, sticky="w", pady=2)
+            row=2, column=1, sticky="w", pady=2)
     
-        ttk.Label(main_frame, text="结束日期(YYYY/MM/DD):").grid(row=4, column=0, sticky="w", pady=2)
+        ttk.Label(main_frame, text="结束日期(YYYY/MM/DD):").grid(row=3, column=0, sticky="w", pady=2)
         self.end_date_var = tk.StringVar(value=self.config.get('Search', 'end_date'))
         ttk.Entry(main_frame, textvariable=self.end_date_var, width=20).grid(
-            row=4, column=1, sticky="w", pady=2)
+            row=3, column=1, sticky="w", pady=2)
     
-        ttk.Label(main_frame, text="最大结果数:").grid(row=5, column=0, sticky="w", pady=2)
+        ttk.Label(main_frame, text="最大结果数:").grid(row=4, column=0, sticky="w", pady=2)
         self.max_results_var = tk.StringVar(value=self.config.get('Search', 'max_results', fallback='1000'))
         ttk.Entry(main_frame, textvariable=self.max_results_var, width=10).grid(
-            row=5, column=1, sticky="w", pady=2)
+            row=4, column=1, sticky="w", pady=2)
     
         # 添加搜索模式选项
-        ttk.Label(main_frame, text="搜索模式:").grid(row=6, column=0, sticky="w", pady=2)
+        ttk.Label(main_frame, text="搜索模式:").grid(row=5, column=0, sticky="w", pady=2)
         self.search_mode_var = tk.StringVar(value=self.config.get('Search', 'search_mode', fallback='separate'))
         search_mode_frame = ttk.Frame(main_frame)
-        search_mode_frame.grid(row=6, column=1, sticky="w", pady=2)
+        search_mode_frame.grid(row=5, column=1, sticky="w", pady=2)
         ttk.Radiobutton(search_mode_frame, text="分别搜索每个关键词", variable=self.search_mode_var, 
                        value="separate").grid(row=0, column=0, sticky="w", padx=5)
         ttk.Radiobutton(search_mode_frame, text="搜索所有关键词同时出现 (AND)", variable=self.search_mode_var, 
                        value="combined").grid(row=0, column=1, sticky="w", padx=5)
     
-        # CNKI特定选项
-        self.cnki_frame = ttk.LabelFrame(main_frame, text="CNKI特定选项", padding=5)
-        self.cnki_frame.grid(row=7, column=0, columnspan=2, sticky="we", pady=5)
-    
-        ttk.Label(self.cnki_frame, text="数据库类型:").grid(row=0, column=0, sticky="w", pady=2)
-        self.cnki_db_code_var = tk.StringVar(value=self.config.get('Search', 'cnki_db_code', fallback='CJFD'))
-        db_codes = {"CJFD": "中国学术期刊", "CDFD": "博士论文", "CMFD": "硕士论文"}
-        cnki_db_combo = ttk.Combobox(self.cnki_frame, textvariable=self.cnki_db_code_var, width=15)
-        cnki_db_combo['values'] = [f"{code} ({desc})" for code, desc in db_codes.items()]
-        cnki_db_combo.grid(row=0, column=1, sticky="w", pady=2)
-        cnki_db_combo.current(0)
-    
-        # 默认根据当前数据库设置显示或隐藏CNKI特定选项
-        self.update_search_options()
-    
         # 保存搜索设置按钮
         ttk.Button(main_frame, text="保存搜索设置", command=self.save_search_config).grid(
-            row=8, column=0, sticky="w", pady=10)
+            row=6, column=0, sticky="w", pady=10)
     
         # 开始爬取按钮
         ttk.Button(main_frame, text="开始文献爬取", command=self.start_crawling).grid(
-            row=8, column=1, sticky="w", pady=10)
+            row=6, column=1, sticky="w", pady=10)
     
         # 日志框
         ttk.Label(main_frame, text="爬取日志:", font=("Arial", 10, "bold")).grid(
-            row=9, column=0, columnspan=2, sticky="w", pady=(10, 5))
+            row=7, column=0, columnspan=2, sticky="w", pady=(10, 5))
     
         self.search_log = scrolledtext.ScrolledText(main_frame, width=80, height=15, wrap=tk.WORD)
-        self.search_log.grid(row=10, column=0, columnspan=2, pady=5)
+        self.search_log.grid(row=8, column=0, columnspan=2, pady=5)
         self.search_log.config(state=tk.DISABLED)
-
-    def update_search_options(self):
-        """根据选择的数据库更新搜索选项"""
-        if self.database_var.get() == "cnki":
-            self.cnki_frame.grid(row=7, column=0, columnspan=2, sticky="we", pady=5)
-        else:
-            self.cnki_frame.grid_remove()
 
     def save_search_config(self):
         """保存搜索配置"""
-        # 从CNKI数据库代码中提取实际代码值（如"CJFD (中国学术期刊)"中提取"CJFD"）
-        cnki_db_code = self.cnki_db_code_var.get().split(" ")[0] if " " in self.cnki_db_code_var.get() else self.cnki_db_code_var.get()
-        
         self.config['Search'] = {
             'search_terms': self.search_terms_var.get(),
             'start_date': self.start_date_var.get(),
             'end_date': self.end_date_var.get(),
             'max_results': self.max_results_var.get(),
-            'database': self.database_var.get(),
-            'search_mode': self.search_mode_var.get(),
-            'cnki_db_code': cnki_db_code
+            'search_mode': self.search_mode_var.get()  # 新增搜索模式配置
         }
         self.save_config()
         messagebox.showinfo("配置已保存", "搜索配置已成功保存")
@@ -550,141 +466,21 @@ class KGApp:
         finally:
             self.is_running = False
 
-    def crawl_cnki(self, username, password, search_terms, date_range, max_results, output_dir, db_code="CJFD"):
-        """
-        CNKI文献爬取线程
-        
-        Args:
-            username: CNKI账号用户名
-            password: CNKI账号密码
-            search_terms: 搜索关键词列表
-            date_range: 日期范围元组(开始日期, 结束日期)
-            max_results: 最大结果数
-            output_dir: 输出目录
-            db_code: CNKI数据库代码
-        """
-        try:
-            self.append_to_log(self.search_log, f"开始CNKI文献爬取")
-            
-            # 导入CNKI爬虫模块
-            try:
-                from cnki_crawler import CNKICrawler
-            except ImportError:
-                self.append_to_log(self.search_log, "错误: 找不到CNKI爬虫模块，请确保cnki_crawler.py文件在正确位置")
-                self.is_running = False
-                return
-            
-            # 创建CNKI爬虫实例
-            crawler = CNKICrawler(
-                username=username,
-                password=password,
-                batch_size=100,
-                output_dir=output_dir
-            )
-            
-            # 获取搜索模式
-            search_mode = self.config.get('Search', 'search_mode', fallback='separate')
-            
-            # 根据搜索模式执行搜索
-            if search_mode == 'combined' and len(search_terms) > 1:
-                # 使用AND操作符组合所有关键词
-                combined_term = " AND ".join(f"({term})" for term in search_terms)
-                self.append_to_log(self.search_log, f"搜索词: {combined_term} (关键词同时出现)")
-                self.append_to_log(self.search_log, f"日期范围: {date_range[0]} - {date_range[1]}")
-                self.append_to_log(self.search_log, f"最大结果数: {max_results}")
-                self.append_to_log(self.search_log, f"输出目录: {output_dir}")
-                self.append_to_log(self.search_log, f"数据库: CNKI {db_code}")
-                
-                results = crawler.search_cnki(
-                    term=combined_term,
-                    date_range=date_range,
-                    max_results=max_results,
-                    db_code=db_code
-                )
-                
-                if results and 'count' in results:
-                    count = results['count']
-                    self.append_to_log(self.search_log, f"找到 {count} 条相关文献")
-                    total_count = count
-                else:
-                    self.append_to_log(self.search_log, "搜索未返回有效结果")
-                    total_count = 0
-                    
-            else:
-                # 分别搜索每个关键词
-                self.append_to_log(self.search_log, f"搜索词: {', '.join(search_terms)} (分别搜索)")
-                self.append_to_log(self.search_log, f"日期范围: {date_range[0]} - {date_range[1]}")
-                self.append_to_log(self.search_log, f"最大结果数: {max_results}")
-                self.append_to_log(self.search_log, f"输出目录: {output_dir}")
-                self.append_to_log(self.search_log, f"数据库: CNKI {db_code}")
-                
-                total_count = 0
-                for term in search_terms:
-                    self.append_to_log(self.search_log, f"\n搜索关键词: {term}")
-                    results = crawler.search_cnki(
-                        term=term,
-                        date_range=date_range,
-                        max_results=max_results,
-                        db_code=db_code
-                    )
-                    
-                    if results and 'count' in results:
-                        count = results['count']
-                        self.append_to_log(self.search_log, f"找到 {count} 条相关文献")
-                        total_count += count
-                    else:
-                        self.append_to_log(self.search_log, "搜索未返回有效结果")
-            
-            # 查看爬取的文件列表
-            file_list = []
-            for root, _, files in os.walk(output_dir):
-                for file in files:
-                    if file.endswith('.json'):
-                        file_list.append(os.path.join(root, file))
-            
-            self.append_to_log(self.search_log, f"\n爬取完成，共获取 {total_count} 条文献")
-            self.append_to_log(self.search_log, f"生成 {len(file_list)} 个文件:")
-            
-            for file_path in file_list:
-                rel_path = os.path.relpath(file_path, output_dir)
-                self.append_to_log(self.search_log, f"  - {rel_path}")
-            
-            self.append_to_log(self.search_log, "\n可以进入'数据处理'选项卡开始处理爬取的文献")
-            
-        except Exception as e:
-            self.logger.error(f"爬取过程中发生错误: {str(e)}")
-            self.append_to_log(self.search_log, f"爬取过程中发生错误: {str(e)}")
-            import traceback
-            self.append_to_log(self.search_log, traceback.format_exc())
-        finally:
-            self.is_running = False
-
     def start_crawling(self):
         """开始爬取文献"""
         if self.is_running:
             messagebox.showwarning("操作进行中", "已有操作正在进行，请等待完成")
             return
-    
-        # 获取选择的数据库
-        database = self.database_var.get()
-    
-        # 根据不同数据库获取必要参数
-        if database == "pubmed":
-            # 获取API配置
-            email = self.ncbi_email_var.get()
-            api_key = self.ncbi_api_key_var.get()
         
-            # 检查必填参数
-            if not email or '@' not in email:
-                messagebox.showerror("参数错误", "请输入有效的邮箱地址")
-                return
-        elif database == "cnki":
-            # CNKI可以不需要账号密码，使用游客模式
-            pass
-        else:
-            messagebox.showerror("参数错误", "未支持的数据库类型")
+        # 获取API配置
+        email = self.ncbi_email_var.get()
+        api_key = self.ncbi_api_key_var.get()
+        
+        # 检查必填参数
+        if not email or '@' not in email:
+            messagebox.showerror("参数错误", "请输入有效的邮箱地址")
             return
-    
+        
         # 获取搜索参数
         search_terms = [term.strip() for term in self.search_terms_var.get().split(',')]
         date_range = (self.start_date_var.get(), self.end_date_var.get())
@@ -693,111 +489,25 @@ class KGApp:
         except ValueError:
             messagebox.showerror("参数错误", "最大结果数必须是整数")
             return
-    
-        # 获取搜索模式
-        search_mode = self.search_mode_var.get()
-    
+        
         # 清空日志
         self.search_log.config(state=tk.NORMAL)
         self.search_log.delete(1.0, tk.END)
         self.search_log.config(state=tk.DISABLED)
-    
-        # 创建输出目录
-        output_dir = os.path.join(self.results_dir, f'{database}_data', 
-                             datetime.now().strftime("%Y%m%d_%H%M%S"))
+        
+        # 创建输出目录 - Windows路径处理
+        output_dir = os.path.join(self.results_dir, 'pubmed_data', 
+                                 datetime.now().strftime("%Y%m%d_%H%M%S"))
         os.makedirs(output_dir, exist_ok=True)
-    
+        
         # 启动爬取线程
         self.is_running = True
-    
-        if database == "pubmed":
-            self.process_thread = threading.Thread(
-                target=self.crawl_pubmed,
-                args=(email, api_key, search_terms, date_range, max_results, output_dir)
-            )
-            self.process_thread.daemon = True
-            self.process_thread.start()
-        else:  # cnki
-            username = self.cnki_username_var.get()
-            password = self.cnki_password_var.get()
-            cnki_db_code = self.cnki_db_code_var.get().split(" ")[0] if " " in self.cnki_db_code_var.get() else self.cnki_db_code_var.get()
-        
-            # 检查是否使用Selenium（如果可用）
-            use_selenium = False
-            use_manual_mode = False
-        
-            if hasattr(self, 'cnki_method_var') and SELENIUM_AVAILABLE:
-                method = self.cnki_method_var.get()
-                if method == "selenium":
-                    use_selenium = True
-                elif method == "manual":
-                    use_selenium = True
-                    use_manual_mode = True
-        
-            if use_selenium:
-                # 使用Selenium爬虫
-                self.append_to_log(self.search_log, f"开始使用Selenium爬取CNKI文献")
-                if use_manual_mode:
-                    self.append_to_log(self.search_log, "使用手动模式，请按照提示在浏览器中操作")
-                self.append_to_log(self.search_log, f"搜索词: {', '.join(search_terms)}")
-                self.append_to_log(self.search_log, f"日期范围: {date_range[0]} - {date_range[1]}")
-                self.append_to_log(self.search_log, f"最大结果数: {max_results}")
-                self.append_to_log(self.search_log, f"输出目录: {output_dir}")
-                self.append_to_log(self.search_log, f"数据库: CNKI {cnki_db_code}")
-            
-                # 准备搜索词
-                search_term = search_terms[0]
-                if search_mode == "combined" and len(search_terms) > 1:
-                    search_term = " AND ".join([f"({term})" for term in search_terms])
-            
-                # 创建集成实例
-                self.cnki_integration = CNKISeleniumIntegration(logger=self.logger)
-            
-                # 定义回调函数
-                def selenium_callback(results):
-                    if results["status"] == "error":
-                        self.append_to_log(self.search_log, f"爬取过程中发生错误: {results['message']}")
-                        self.is_running = False
-                        return
-                
-                    self.append_to_log(self.search_log, f"\n爬取完成，共获取 {len(results['results'])} 条文献")
-                
-                    if results.get('csv_path'):
-                        self.append_to_log(self.search_log, f"CSV文件已保存到: {results['csv_path']}")
-                
-                    if results.get('json_path'):
-                        self.append_to_log(self.search_log, f"JSON文件已保存到: {results['json_path']}")
-                
-                    self.append_to_log(self.search_log, "\n可以进入'数据处理'选项卡开始处理爬取的文献")
-                    self.is_running = False
-            
-                # 启动Selenium爬虫
-                self.process_thread = self.cnki_integration.start_crawler(
-                    username=username,
-                    password=password,
-                    term=search_term,
-                    date_range=date_range,
-                    max_results=max_results,
-                    db_code=cnki_db_code,
-                    output_dir=output_dir,
-                    headless=False,  # 设置为True会隐藏浏览器窗口
-                    callback=selenium_callback,
-                    use_manual_mode=use_manual_mode
-                )
-            
-                if not self.process_thread:
-                    # Selenium启动失败
-                    self.append_to_log(self.search_log, "Selenium启动失败，请检查是否已安装所需库")
-                    self.append_to_log(self.search_log, "需要安装: pip install selenium webdriver-manager pandas")
-                    self.is_running = False
-            else:
-                # 使用传统爬虫
-                self.process_thread = threading.Thread(
-                    target=self.crawl_cnki,
-                    args=(username, password, search_terms, date_range, max_results, output_dir, cnki_db_code)
-                )
-                self.process_thread.daemon = True
-                self.process_thread.start()
+        self.process_thread = threading.Thread(
+            target=self.crawl_pubmed,
+            args=(email, api_key, search_terms, date_range, max_results, output_dir)
+        )
+        self.process_thread.daemon = True
+        self.process_thread.start()
 
     def append_to_log(self, log_widget, message):
         """向日志控件添加消息"""
@@ -901,7 +611,7 @@ class KGApp:
     def select_input_file(self):
         """选择输入文件"""
         file_path = filedialog.askopenfilename(
-            title="选择JSON文件",
+            title="选择PubMed JSON文件",
             filetypes=[("JSON文件", "*.json"), ("所有文件", "*.*")]
         )
         if file_path:
@@ -910,7 +620,7 @@ class KGApp:
 
     def select_input_dir(self):
         """选择输入目录"""
-        dir_path = filedialog.askdirectory(title="选择包含JSON文件的目录")
+        dir_path = filedialog.askdirectory(title="选择包含PubMed JSON文件的目录")
         if dir_path:
             self.dir_path_var.set(dir_path)
             self.input_option_var.set("directory")
@@ -957,21 +667,18 @@ class KGApp:
             return json_files
             
         else:  # "latest"
-            # 获取当前选择的数据库类型
-            database = self.config.get('Search', 'database', fallback='pubmed')
-            
-            # 查找最新的数据目录
-            data_dir = os.path.join(self.results_dir, f'{database}_data')
-            if not os.path.exists(data_dir):
-                messagebox.showerror("目录错误", f"找不到{database.upper()}数据目录，请先爬取文献")
+            # 查找最新的PubMed数据目录
+            pubmed_dir = os.path.join(self.results_dir, 'pubmed_data')
+            if not os.path.exists(pubmed_dir):
+                messagebox.showerror("目录错误", "找不到PubMed数据目录，请先爬取文献")
                 return []
                 
             # 获取最新的子目录
-            subdirs = [os.path.join(data_dir, d) for d in os.listdir(data_dir) 
-                      if os.path.isdir(os.path.join(data_dir, d))]
+            subdirs = [os.path.join(pubmed_dir, d) for d in os.listdir(pubmed_dir) 
+                      if os.path.isdir(os.path.join(pubmed_dir, d))]
             
             if not subdirs:
-                messagebox.showerror("目录错误", f"找不到{database.upper()}数据子目录，请先爬取文献")
+                messagebox.showerror("目录错误", "找不到PubMed数据子目录，请先爬取文献")
                 return []
                 
             latest_dir = max(subdirs, key=os.path.getmtime)
@@ -984,15 +691,11 @@ class KGApp:
                         json_files.append(os.path.join(root, file))
             
             if not json_files:
-                messagebox.showerror("文件错误", f"最新的{database.upper()}数据目录中没有找到JSON文件")
+                messagebox.showerror("文件错误", "最新的PubMed数据目录中没有找到JSON文件")
                 return []
                 
             return json_files
-    def cleanup(self):
-        """关闭资源并清理"""
-        # 停止可能运行的Selenium爬虫
-        if hasattr(self, 'cnki_integration') and self.cnki_integration:
-            self.cnki_integration.stop_crawler()
+
     def start_processing(self):
         """开始处理文献和构建知识图谱"""
         if self.is_running:
@@ -1894,20 +1597,18 @@ if __name__ == "__main__":
         # 系统介绍
         info_text = (
             "文献知识图谱构建系统是一个专门为研究设计的文献挖掘和知识图谱构建工具。"
-            "系统使用PubMed API与CNKI接口获取研究文献，并利用大语言模型提取生物医学实体和关系，"
+            "系统使用PubMed API获取最新的研究文献，并利用大语言模型提取生物医学实体和关系，"
             "构建可视化的知识图谱，帮助研究人员快速了解研究领域的知识结构。\n\n"
             
             "系统主要功能:\n"
-            "1. PubMed和CNKI文献自动爬取与存储\n"
+            "1. PubMed文献自动爬取与存储\n"
             "2. 基于大语言模型的生物医学实体识别\n"
             "3. 实体间关系提取与知识三元组生成\n"
-            "4. 知识图谱构建与交互式可视化\n"
-            "5. 多源知识图谱合并与分析\n\n"
+            "4. 知识图谱构建与交互式可视化\n\n"
             
             "技术栈:\n"
             "- Python 3.9+\n"
             "- Biopython (PubMed API访问)\n"
-            "- BeautifulSoup4 (CNKI网页解析)\n"
             "- Tkinter (图形界面)\n"
             "- NetworkX (图数据处理)\n"
             "- PyVis (知识图谱可视化)\n"
@@ -1962,14 +1663,8 @@ def main():
     if os.path.exists(icon_path):
         root.iconbitmap(icon_path)
     app = KGApp(root)
-    
-    # 添加关闭窗口时的清理操作
-    def on_closing():
-        app.cleanup()
-        root.destroy()
-    
-    root.protocol("WM_DELETE_WINDOW", on_closing)
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()

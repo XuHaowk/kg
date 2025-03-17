@@ -340,11 +340,11 @@ class KGApp:
         # 创建主框架
         main_frame = ttk.Frame(self.search_tab, padding="10")
         main_frame.pack(fill="both", expand=True)
-    
+
         # 创建标题
         ttk.Label(main_frame, text="文献搜索", font=("Arial", 16, "bold")).grid(
             row=0, column=0, columnspan=2, sticky="w", pady=(0, 20))
-    
+
         # 数据库选择
         ttk.Label(main_frame, text="数据库:").grid(row=1, column=0, sticky="w", pady=2)
         self.database_var = tk.StringVar(value=self.config.get('Search', 'database', fallback='pubmed'))
@@ -354,41 +354,29 @@ class KGApp:
                        value="pubmed", command=self.update_search_options).grid(row=0, column=0, sticky="w", padx=5)
         ttk.Radiobutton(database_frame, text="CNKI中国知网", variable=self.database_var, 
                        value="cnki", command=self.update_search_options).grid(row=0, column=1, sticky="w", padx=5)
-    
-        # Add CNKI method selection
-        if SELENIUM_AVAILABLE:
-            self.cnki_method_var = tk.StringVar(value="api")
-            cnki_method_frame = ttk.Frame(main_frame)
-            cnki_method_frame.grid(row=1, column=2, sticky="w", pady=2)
-            ttk.Label(cnki_method_frame, text="CNKI方法:").grid(row=0, column=0, sticky="w", padx=5)
-            ttk.Radiobutton(cnki_method_frame, text="传统API", variable=self.cnki_method_var, 
-                           value="api").grid(row=0, column=1, sticky="w", padx=5)
-            ttk.Radiobutton(cnki_method_frame, text="Selenium浏览器", variable=self.cnki_method_var, 
-                           value="selenium").grid(row=0, column=2, sticky="w", padx=5)
-            ttk.Radiobutton(cnki_method_frame, text="手动模式", variable=self.cnki_method_var, 
-                           value="manual").grid(row=0, column=3, sticky="w", padx=5)
-    
+
+
         # 搜索参数
         ttk.Label(main_frame, text="搜索关键词(用逗号分隔):").grid(row=2, column=0, sticky="w", pady=2)
         self.search_terms_var = tk.StringVar(value=self.config.get('Search', 'search_terms', fallback='输入关键词，多个使用逗号分隔'))
         ttk.Entry(main_frame, textvariable=self.search_terms_var, width=50).grid(
             row=2, column=1, sticky="w", pady=2)
-    
+
         ttk.Label(main_frame, text="起始日期(YYYY/MM/DD):").grid(row=3, column=0, sticky="w", pady=2)
         self.start_date_var = tk.StringVar(value=self.config.get('Search', 'start_date'))
         ttk.Entry(main_frame, textvariable=self.start_date_var, width=20).grid(
             row=3, column=1, sticky="w", pady=2)
-    
+
         ttk.Label(main_frame, text="结束日期(YYYY/MM/DD):").grid(row=4, column=0, sticky="w", pady=2)
         self.end_date_var = tk.StringVar(value=self.config.get('Search', 'end_date'))
         ttk.Entry(main_frame, textvariable=self.end_date_var, width=20).grid(
             row=4, column=1, sticky="w", pady=2)
-    
+
         ttk.Label(main_frame, text="最大结果数:").grid(row=5, column=0, sticky="w", pady=2)
         self.max_results_var = tk.StringVar(value=self.config.get('Search', 'max_results', fallback='1000'))
         ttk.Entry(main_frame, textvariable=self.max_results_var, width=10).grid(
             row=5, column=1, sticky="w", pady=2)
-    
+
         # 添加搜索模式选项
         ttk.Label(main_frame, text="搜索模式:").grid(row=6, column=0, sticky="w", pady=2)
         self.search_mode_var = tk.StringVar(value=self.config.get('Search', 'search_mode', fallback='separate'))
@@ -398,11 +386,11 @@ class KGApp:
                        value="separate").grid(row=0, column=0, sticky="w", padx=5)
         ttk.Radiobutton(search_mode_frame, text="搜索所有关键词同时出现 (AND)", variable=self.search_mode_var, 
                        value="combined").grid(row=0, column=1, sticky="w", padx=5)
-    
+
         # CNKI特定选项
         self.cnki_frame = ttk.LabelFrame(main_frame, text="CNKI特定选项", padding=5)
         self.cnki_frame.grid(row=7, column=0, columnspan=2, sticky="we", pady=5)
-    
+
         ttk.Label(self.cnki_frame, text="数据库类型:").grid(row=0, column=0, sticky="w", pady=2)
         self.cnki_db_code_var = tk.StringVar(value=self.config.get('Search', 'cnki_db_code', fallback='CJFD'))
         db_codes = {"CJFD": "中国学术期刊", "CDFD": "博士论文", "CMFD": "硕士论文"}
@@ -410,22 +398,22 @@ class KGApp:
         cnki_db_combo['values'] = [f"{code} ({desc})" for code, desc in db_codes.items()]
         cnki_db_combo.grid(row=0, column=1, sticky="w", pady=2)
         cnki_db_combo.current(0)
-    
+
         # 默认根据当前数据库设置显示或隐藏CNKI特定选项
         self.update_search_options()
-    
+
         # 保存搜索设置按钮
         ttk.Button(main_frame, text="保存搜索设置", command=self.save_search_config).grid(
             row=8, column=0, sticky="w", pady=10)
-    
+
         # 开始爬取按钮
         ttk.Button(main_frame, text="开始文献爬取", command=self.start_crawling).grid(
             row=8, column=1, sticky="w", pady=10)
-    
+
         # 日志框
         ttk.Label(main_frame, text="爬取日志:", font=("Arial", 10, "bold")).grid(
             row=9, column=0, columnspan=2, sticky="w", pady=(10, 5))
-    
+
         self.search_log = scrolledtext.ScrolledText(main_frame, width=80, height=15, wrap=tk.WORD)
         self.search_log.grid(row=10, column=0, columnspan=2, pady=5)
         self.search_log.config(state=tk.DISABLED)
@@ -659,21 +647,137 @@ class KGApp:
         finally:
             self.is_running = False
 
+    def crawl_cnki_with_edge(self, search_term, date_range, max_results, output_dir, db_code):
+        """Crawl CNKI using Edge browser crawler"""
+        try:
+            # Create the Edge crawler
+            from cnki_edge_crawler import CNKIEdgeCrawler
+            crawler = CNKIEdgeCrawler(output_dir=output_dir)
+        
+            # Perform search
+            results = crawler.search_cnki(
+                term=search_term,
+                date_range=date_range,
+                max_results=max_results,
+                db_code=db_code
+            )
+        
+            if "error" in results:
+                self.append_to_log(self.search_log, f"爬取过程中发生错误: {results['error']}")
+            else:
+                count = results.get("count", 0)
+                crawled = len(results.get("results", []))
+            
+                self.append_to_log(self.search_log, f"\n爬取完成!")
+                self.append_to_log(self.search_log, f"找到 {count} 条结果, 爬取 {crawled} 篇文献")
+            
+                if "json_path" in results:
+                    self.append_to_log(self.search_log, f"结果已保存为JSON: {results['json_path']}")
+                if "csv_path" in results:
+                    self.append_to_log(self.search_log, f"结果已保存为CSV: {results['csv_path']}")
+            
+                self.append_to_log(self.search_log, "\n可以进入'数据处理'选项卡开始处理爬取的文献")
+            
+        except Exception as e:
+            self.logger.error(f"Edge浏览器爬取CNKI过程中发生错误: {str(e)}")
+            self.append_to_log(self.search_log, f"爬取过程中发生错误: {str(e)}")
+            import traceback
+            self.append_to_log(self.search_log, traceback.format_exc())
+        finally:
+            self.is_running = False
+    
+    def crawl_cnki_with_undetected(self, search_term, date_range, max_results, output_dir, db_code):
+        """Crawl CNKI using undetected-chromedriver crawler"""
+        try:
+            # Create the undetected crawler
+            from cnki_undetected_crawler import CNKIUndetectedCrawler
+            crawler = CNKIUndetectedCrawler(output_dir=output_dir)
+        
+            # Perform search
+            results = crawler.search_cnki(
+                term=search_term,
+                date_range=date_range,
+                max_results=max_results,
+                db_code=db_code
+            )
+        
+            if "error" in results:
+                self.append_to_log(self.search_log, f"爬取过程中发生错误: {results['error']}")
+            else:
+                count = results.get("count", 0)
+                crawled = len(results.get("results", []))
+            
+                self.append_to_log(self.search_log, f"\n爬取完成!")
+                self.append_to_log(self.search_log, f"找到 {count} 条结果, 爬取 {crawled} 篇文献")
+            
+                if "json_path" in results:
+                    self.append_to_log(self.search_log, f"结果已保存为JSON: {results['json_path']}")
+                if "csv_path" in results:
+                    self.append_to_log(self.search_log, f"结果已保存为CSV: {results['csv_path']}")
+            
+                self.append_to_log(self.search_log, "\n可以进入'数据处理'选项卡开始处理爬取的文献")
+            
+        except Exception as e:
+            self.logger.error(f"Undetected爬虫爬取CNKI过程中发生错误: {str(e)}")
+            self.append_to_log(self.search_log, f"爬取过程中发生错误: {str(e)}")
+            import traceback
+            self.append_to_log(self.search_log, traceback.format_exc())
+        finally:
+            self.is_running = False
+    
+    def crawl_cnki_with_direct(self, search_term, date_range, max_results, output_dir, db_code):
+        """Crawl CNKI using direct HTTP requests (without browser automation)"""
+        try:
+            # Create the direct crawler
+            from cnki_direct_crawler import CNKIDirectCrawler
+            crawler = CNKIDirectCrawler(output_dir=output_dir)
+        
+            # Perform search
+            results = crawler.search_cnki(
+                term=search_term,
+                date_range=date_range,
+                max_results=max_results,
+                db_code=db_code
+            )
+        
+            if "error" in results:
+                self.append_to_log(self.search_log, f"爬取过程中发生错误: {results['error']}")
+            else:
+                count = results.get("count", 0)
+                crawled = len(results.get("results", []))
+            
+                self.append_to_log(self.search_log, f"\n爬取完成!")
+                self.append_to_log(self.search_log, f"找到 {count} 条结果, 爬取 {crawled} 篇文献")
+            
+                if "json_path" in results:
+                    self.append_to_log(self.search_log, f"结果已保存为JSON: {results['json_path']}")
+                if "csv_path" in results:
+                    self.append_to_log(self.search_log, f"结果已保存为CSV: {results['csv_path']}")
+            
+                self.append_to_log(self.search_log, "\n可以进入'数据处理'选项卡开始处理爬取的文献")
+            
+        except Exception as e:
+            self.logger.error(f"Direct HTTP爬取CNKI过程中发生错误: {str(e)}")
+            self.append_to_log(self.search_log, f"爬取过程中发生错误: {str(e)}")
+            import traceback
+            self.append_to_log(self.search_log, traceback.format_exc())
+        finally:
+            self.is_running = False
     def start_crawling(self):
         """开始爬取文献"""
         if self.is_running:
             messagebox.showwarning("操作进行中", "已有操作正在进行，请等待完成")
             return
-    
+
         # 获取选择的数据库
         database = self.database_var.get()
-    
+
         # 根据不同数据库获取必要参数
         if database == "pubmed":
             # 获取API配置
             email = self.ncbi_email_var.get()
             api_key = self.ncbi_api_key_var.get()
-        
+    
             # 检查必填参数
             if not email or '@' not in email:
                 messagebox.showerror("参数错误", "请输入有效的邮箱地址")
@@ -684,7 +788,7 @@ class KGApp:
         else:
             messagebox.showerror("参数错误", "未支持的数据库类型")
             return
-    
+
         # 获取搜索参数
         search_terms = [term.strip() for term in self.search_terms_var.get().split(',')]
         date_range = (self.start_date_var.get(), self.end_date_var.get())
@@ -693,23 +797,23 @@ class KGApp:
         except ValueError:
             messagebox.showerror("参数错误", "最大结果数必须是整数")
             return
-    
+
         # 获取搜索模式
         search_mode = self.search_mode_var.get()
-    
+
         # 清空日志
         self.search_log.config(state=tk.NORMAL)
         self.search_log.delete(1.0, tk.END)
         self.search_log.config(state=tk.DISABLED)
-    
+
         # 创建输出目录
         output_dir = os.path.join(self.results_dir, f'{database}_data', 
                              datetime.now().strftime("%Y%m%d_%H%M%S"))
         os.makedirs(output_dir, exist_ok=True)
-    
+
         # 启动爬取线程
         self.is_running = True
-    
+
         if database == "pubmed":
             self.process_thread = threading.Thread(
                 target=self.crawl_pubmed,
@@ -721,56 +825,106 @@ class KGApp:
             username = self.cnki_username_var.get()
             password = self.cnki_password_var.get()
             cnki_db_code = self.cnki_db_code_var.get().split(" ")[0] if " " in self.cnki_db_code_var.get() else self.cnki_db_code_var.get()
+    
+            # 获取选择的爬虫方法
+            crawler_method = "api"  # 默认值
+            if hasattr(self, 'cnki_method_var'):
+                crawler_method = self.cnki_method_var.get()
         
-            # 检查是否使用Selenium（如果可用）
-            use_selenium = False
-            use_manual_mode = False
-        
-            if hasattr(self, 'cnki_method_var') and SELENIUM_AVAILABLE:
-                method = self.cnki_method_var.get()
-                if method == "selenium":
-                    use_selenium = True
-                elif method == "manual":
-                    use_selenium = True
-                    use_manual_mode = True
-        
-            if use_selenium:
+            if crawler_method == "edge":
+                # 使用Edge浏览器爬虫
+                try:
+                    from cnki_edge_crawler import CNKIEdgeCrawler
+                
+                    self.append_to_log(self.search_log, f"开始使用Edge浏览器爬取CNKI文献")
+                    self.append_to_log(self.search_log, f"搜索词: {', '.join(search_terms)}")
+                    self.append_to_log(self.search_log, f"日期范围: {date_range[0]} - {date_range[1]}")
+                    self.append_to_log(self.search_log, f"最大结果数: {max_results}")
+                    self.append_to_log(self.search_log, f"输出目录: {output_dir}")
+                    self.append_to_log(self.search_log, f"数据库: CNKI {cnki_db_code}")
+                
+                    # 准备搜索词
+                    search_term = search_terms[0]
+                    if search_mode == "combined" and len(search_terms) > 1:
+                        search_term = " AND ".join([f"({term})" for term in search_terms])
+                
+                    # 启动Edge爬虫线程
+                    self.process_thread = threading.Thread(
+                        target=self.crawl_cnki_with_edge,
+                        args=(search_term, date_range, max_results, output_dir, cnki_db_code)
+                    )
+                    self.process_thread.daemon = True
+                    self.process_thread.start()
+                
+                except ImportError:
+                    self.append_to_log(self.search_log, "Edge浏览器方法不可用。请确保cnki_edge_crawler.py在正确位置。")
+                    self.is_running = False
+                    return
+            elif crawler_method == "undetected":
+                # 使用增强型Chrome爬虫
+                try:
+                    from cnki_undetected_crawler import CNKIUndetectedCrawler
+                
+                    self.append_to_log(self.search_log, f"开始使用增强型Chrome爬取CNKI文献")
+                    self.append_to_log(self.search_log, f"搜索词: {', '.join(search_terms)}")
+                    self.append_to_log(self.search_log, f"日期范围: {date_range[0]} - {date_range[1]}")
+                    self.append_to_log(self.search_log, f"最大结果数: {max_results}")
+                    self.append_to_log(self.search_log, f"输出目录: {output_dir}")
+                    self.append_to_log(self.search_log, f"数据库: CNKI {cnki_db_code}")
+                
+                    # 准备搜索词
+                    search_term = search_terms[0]
+                    if search_mode == "combined" and len(search_terms) > 1:
+                        search_term = " AND ".join([f"({term})" for term in search_terms])
+                
+                    # 启动增强型Chrome爬虫线程
+                    self.process_thread = threading.Thread(
+                        target=self.crawl_cnki_with_undetected,
+                        args=(search_term, date_range, max_results, output_dir, cnki_db_code)
+                    )
+                    self.process_thread.daemon = True
+                    self.process_thread.start()
+                
+                except ImportError:
+                    self.append_to_log(self.search_log, "增强型Chrome浏览器方法不可用。请确保cnki_undetected_crawler.py在正确位置。")
+                    self.append_to_log(self.search_log, "请安装所需库: pip install undetected-chromedriver pandas requests")
+                    self.is_running = False
+                    return
+            elif crawler_method == "selenium":
                 # 使用Selenium爬虫
                 self.append_to_log(self.search_log, f"开始使用Selenium爬取CNKI文献")
-                if use_manual_mode:
-                    self.append_to_log(self.search_log, "使用手动模式，请按照提示在浏览器中操作")
                 self.append_to_log(self.search_log, f"搜索词: {', '.join(search_terms)}")
                 self.append_to_log(self.search_log, f"日期范围: {date_range[0]} - {date_range[1]}")
                 self.append_to_log(self.search_log, f"最大结果数: {max_results}")
                 self.append_to_log(self.search_log, f"输出目录: {output_dir}")
                 self.append_to_log(self.search_log, f"数据库: CNKI {cnki_db_code}")
-            
+        
                 # 准备搜索词
                 search_term = search_terms[0]
                 if search_mode == "combined" and len(search_terms) > 1:
                     search_term = " AND ".join([f"({term})" for term in search_terms])
-            
+        
                 # 创建集成实例
                 self.cnki_integration = CNKISeleniumIntegration(logger=self.logger)
-            
+        
                 # 定义回调函数
                 def selenium_callback(results):
                     if results["status"] == "error":
                         self.append_to_log(self.search_log, f"爬取过程中发生错误: {results['message']}")
                         self.is_running = False
                         return
-                
+            
                     self.append_to_log(self.search_log, f"\n爬取完成，共获取 {len(results['results'])} 条文献")
-                
+            
                     if results.get('csv_path'):
                         self.append_to_log(self.search_log, f"CSV文件已保存到: {results['csv_path']}")
-                
+            
                     if results.get('json_path'):
                         self.append_to_log(self.search_log, f"JSON文件已保存到: {results['json_path']}")
-                
+            
                     self.append_to_log(self.search_log, "\n可以进入'数据处理'选项卡开始处理爬取的文献")
                     self.is_running = False
-            
+        
                 # 启动Selenium爬虫
                 self.process_thread = self.cnki_integration.start_crawler(
                     username=username,
@@ -782,9 +936,63 @@ class KGApp:
                     output_dir=output_dir,
                     headless=False,  # 设置为True会隐藏浏览器窗口
                     callback=selenium_callback,
-                    use_manual_mode=use_manual_mode
+                    use_manual_mode=False
                 )
+        
+                if not self.process_thread:
+                    # Selenium启动失败
+                    self.append_to_log(self.search_log, "Selenium启动失败，请检查是否已安装所需库")
+                    self.append_to_log(self.search_log, "需要安装: pip install selenium webdriver-manager pandas")
+                    self.is_running = False
+            elif crawler_method == "manual":
+                # 使用手动模式
+                self.append_to_log(self.search_log, f"开始使用手动模式爬取CNKI文献")
+                self.append_to_log(self.search_log, f"搜索词: {', '.join(search_terms)}")
+                self.append_to_log(self.search_log, f"日期范围: {date_range[0]} - {date_range[1]}")
+                self.append_to_log(self.search_log, f"最大结果数: {max_results}")
+                self.append_to_log(self.search_log, f"输出目录: {output_dir}")
+                self.append_to_log(self.search_log, f"数据库: CNKI {cnki_db_code}")
+        
+                # 准备搜索词
+                search_term = search_terms[0]
+                if search_mode == "combined" and len(search_terms) > 1:
+                    search_term = " AND ".join([f"({term})" for term in search_terms])
+        
+                # 创建集成实例
+                self.cnki_integration = CNKISeleniumIntegration(logger=self.logger)
+        
+                # 定义回调函数
+                def selenium_callback(results):
+                    if results["status"] == "error":
+                        self.append_to_log(self.search_log, f"爬取过程中发生错误: {results['message']}")
+                        self.is_running = False
+                        return
             
+                    self.append_to_log(self.search_log, f"\n爬取完成，共获取 {len(results['results'])} 条文献")
+            
+                    if results.get('csv_path'):
+                        self.append_to_log(self.search_log, f"CSV文件已保存到: {results['csv_path']}")
+            
+                    if results.get('json_path'):
+                        self.append_to_log(self.search_log, f"JSON文件已保存到: {results['json_path']}")
+            
+                    self.append_to_log(self.search_log, "\n可以进入'数据处理'选项卡开始处理爬取的文献")
+                    self.is_running = False
+        
+                # 启动Selenium爬虫（手动模式）
+                self.process_thread = self.cnki_integration.start_crawler(
+                    username=username,
+                    password=password,
+                    term=search_term,
+                    date_range=date_range,
+                    max_results=max_results,
+                    db_code=cnki_db_code,
+                    output_dir=output_dir,
+                    headless=False,  # 必须显示浏览器窗口
+                    callback=selenium_callback,
+                    use_manual_mode=True  # 使用手动模式
+                )
+        
                 if not self.process_thread:
                     # Selenium启动失败
                     self.append_to_log(self.search_log, "Selenium启动失败，请检查是否已安装所需库")
@@ -1973,3 +2181,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
